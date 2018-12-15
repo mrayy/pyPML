@@ -21,7 +21,7 @@ from sklearn.preprocessing import LabelEncoder
 
 from ipywidgets import IntProgress
 from IPython.display import display
-import OSCHelper
+import PML.OSCHelper
 
 #dataset load
 def load_img_dataset_from_folder(path,target_size=None,shuffle=True,grayscale=True):
