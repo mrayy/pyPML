@@ -158,6 +158,11 @@ def prepare_flatten_samples(samples):
     samples=np.array(samples)
     return samples.reshape(samples.shape[0],-1)
 
+def prepare_conv_samples(samples):
+    samples=np.array(samples)
+    if len(samples.shape)==3:
+        samples=np.expand_dims(samples,axis=3)
+    return samples
 
 ## Normalization
 
@@ -251,6 +256,23 @@ def create_classify_model(input_len,nbclasses,firstLayer,nlayers,dropout=0.2):
     return model
 
 
+def create_conv_classify_model(input_shape,nbclasses,firstLayer,nlayers,denseLayer,dropout=0.2):
+    model=models.Sequential()
+    model.add(layers.Conv2D(firstLayer,(3,3),activation='relu',input_shape=input_shape))
+    model.add(layers.MaxPooling2D(pool_size=2))
+    if dropout>0:
+        model.add(layers.Dropout(dropout))
+    for l in nlayers:
+        model.add(layers.Conv2D(l,(3,3),activation='relu'))
+        model.add(layers.MaxPooling2D(pool_size=2))
+        if dropout>0:
+            model.add(layers.Dropout(dropout))
+    model.add(layers.Flatten())
+    model.add(layers.Dense(denseLayer,activation='relu'))
+    model.add(layers.Dense(nbclasses,activation='softmax'))
+    model.compile(optimizer='adam',loss='categorical_crossentropy',metrics=['accuracy'])
+    model.summary()
+    return model
 
 def create_regression_model(input_len,nboutputs,firstLayer,nlayers,dropout=0.2):
     model=models.Sequential()
