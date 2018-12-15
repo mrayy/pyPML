@@ -33,7 +33,6 @@ setup(
         'Topic :: System :: Networking',
     ],
     install_requires=[
-          'ipywidgets'
       ],
     dependency_links=['https://github.com/attwad/python-osc'],
     **test_extras
