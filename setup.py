@@ -33,9 +33,6 @@ setup(
         'Topic :: System :: Networking',
     ],
     install_requires=[
-          'pandas',
-          'matplotlib',
-          'numpy',
           'ipywidgets'
       ],
     dependency_links=['https://github.com/attwad/python-osc'],
