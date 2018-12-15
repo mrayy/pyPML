@@ -11,7 +11,7 @@ except ImportError:
     test_extras = {}
 
 setup(
-    name='py-PML',
+    name='PML',
     version='1.0.0',
     author='Yamen Saraiji',
     author_email='yamen@kmd.keio.ac.jp',
