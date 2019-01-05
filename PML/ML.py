@@ -240,6 +240,97 @@ def plot_acc_loss(history,output=""):
         plt.savefig(output, bbox_inches='tight')
     plt.show()
 
+## Visualizing Model
+
+from tensorflow.keras import backend as K
+
+
+def VisualizeLayerActivation(model,layer_name,count=3,epochs=30):
+
+    def deprocess_image(x):
+        x-=x.mean()
+        x/=(x.std()+1e-5)
+        x*=0.1
+
+        x+=0.5
+        x=np.clip(x,0,1)
+
+        x*=255
+        x=np.clip(x,0,255).astype('uint8')
+        return x
+
+    def generate_pattern(model,layer_name,filter_index,size=224,step=1.,epochs=30):
+        layer_output=model.get_layer(layer_name).output
+        loss=K.mean(layer_output[:,:,:,filter_index])
+
+        grads=K.gradients(loss,model.input)[0]
+
+        grads/=(K.sqrt(K.mean(K.square(grads)))+1e-5)
+
+        iterate=K.function([model.input],[loss,grads])
+        input_img_data=np.random.random((1,size,size,3))*20+128
+        for i in range(epochs):
+            loss_val,grads_val=iterate([input_img_data])
+            input_img_data += grads_val*step
+
+        return deprocess_image(input_img_data[0])
+        
+    size=64
+    margin=5
+
+    results=np.zeros((count*size+(count-1)*margin,count*size+(count-1)*margin,3))
+
+    for i in range(count):
+        for j in range(count):
+            index=(j+(i*count))
+            img=generate_pattern(model,layer_name,index,size=size,step=1,epochs=epochs)
+
+            x=i*(size+margin)
+            y=j*(size+margin)
+            results[x:x+size,y:y+size,:]=img
+
+    plt.figure(figsize=(10,10))
+    plt.imshow(results.astype('uint8'))
+
+
+def VisualizeActivations(model,image,last_layer):
+    layer_outputs=[layer.output for layer in model.layers[1:last_layer]]
+    activation_model=models.Model(inputs=model.input,outputs=layer_outputs)
+    activations=activation_model.predict(np.array([image]))
+
+
+    layer_names=[]
+    for layer_name in conv_net.layers:
+        layer_names.append(layer_name.name)
+
+    image_per_row=16
+
+    for name,activation in zip(layer_names,activations):
+        features=activation.shape[-1]
+        size=activation.shape[1]
+
+        cols=features//image_per_row
+        display_grid=np.zeros((size*cols,size*image_per_row))
+
+        for col in range(cols):
+            for row in range(image_per_row):
+                channel_img=activation[0,:,:,col*image_per_row+row]
+
+                channel_img-=channel_img.mean()
+                channel_img/=channel_img.std()
+                channel_img*=64
+                channel_img+=128
+                channel_img=np.clip(channel_img,0,255).astype('uint8')
+                display_grid[col*size:(col+1)*size, row*size:(row+1)*size]=channel_img
+
+
+        scale=1./size
+        plt.figure(figsize=(scale*display_grid.shape[1],scale*display_grid.shape[0]))
+        plt.title(name)
+        plt.grid(False)
+        plt.imshow(display_grid,aspect='auto')
+        plt.show()
+
 ## Models
 def create_classify_model(input_len,nbclasses,firstLayer,nlayers,dropout=0.2):
     model=models.Sequential()
